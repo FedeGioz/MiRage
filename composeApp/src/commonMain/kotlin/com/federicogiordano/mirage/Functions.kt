@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,14 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
-// Define menu items for Functions page
 data class FunctionMenuItem(
     val id: String,
     val title: String,
     val description: String
 )
 
-// Create a list of function menu items
 val functionMenuItems = listOf(
     FunctionMenuItem("manual_control", "Manual Control", "Control robot movements"),
     FunctionMenuItem("mapping", "Mapping", "Create and manage maps"),
@@ -70,7 +68,7 @@ fun FunctionMenuCard(item: FunctionMenuItem, onClick: () -> Unit) {
                 )
             }
             Icon(
-                imageVector = Icons.Default.ArrowForward,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = "Go to ${item.title}",
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -78,7 +76,6 @@ fun FunctionMenuCard(item: FunctionMenuItem, onClick: () -> Unit) {
     }
 }
 
-// Submenu screen composable
 @Composable
 fun FunctionSubScreen(
     title: String,
@@ -97,7 +94,7 @@ fun FunctionSubScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "This is the $title submenu screen",
+            text = "$title submenu",
             style = MaterialTheme.typography.bodyLarge
         )
     }

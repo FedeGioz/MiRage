@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -7,6 +6,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 kotlin {
@@ -44,8 +44,6 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
             implementation(libs.material3)
             implementation(libs.material.icons.extended)
             implementation(libs.navigation.compose)
@@ -56,6 +54,9 @@ kotlin {
             implementation(kotlin("reflect"))
             implementation(libs.datastore)
             implementation(libs.datastore.preferences)
+            implementation(libs.ktor.client.core.v310)
+            implementation(libs.ktor.client.cio.v310)
+            implementation(libs.ktor.client.logging)
         }
     }
 }
@@ -89,6 +90,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.runtime.android)
     debugImplementation(compose.uiTooling)
 }
 
