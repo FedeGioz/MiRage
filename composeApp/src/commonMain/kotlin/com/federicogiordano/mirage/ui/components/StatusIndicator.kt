@@ -55,7 +55,7 @@ fun StatusIndicator(status: RobotStatus?) {
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
-                    text = "${batteryTime}%",
+                    text = "${batteryTime/3600}:${(batteryTime%3600)/60} hours",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

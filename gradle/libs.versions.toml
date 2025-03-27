@@ -33,6 +33,9 @@ kotlinxSerializationJsonJvm = "1.7.3"
 datastore = "1.1.2"
 androidxNavigationCompose = "2.8.7"
 runtimeAndroid = "1.7.8"
+navigationCommonKtx = "2.8.9"
+navigationCommonAndroid = "2.9.0-alpha08"
+uiAndroid = "1.7.8"
 
 
 [libraries]
@@ -76,6 +79,9 @@ datastore = { module = "androidx.datastore:datastore", version.ref = "datastore"
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-navigation-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigationCompose" }
 androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
+androidx-navigation-common-ktx = { group = "androidx.navigation", name = "navigation-common-ktx", version.ref = "navigationCommonKtx" }
+androidx-navigation-common-android = { group = "androidx.navigation", name = "navigation-common-android", version.ref = "navigationCommonAndroid" }
+androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

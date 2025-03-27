@@ -6,6 +6,9 @@ import io.ktor.client.request.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.delay
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 
 class StatusService : BaseApiService {
     suspend fun getStatus(): RobotStatus {
@@ -24,6 +27,18 @@ class StatusService : BaseApiService {
                 emit(RobotStatus(batteryPercentage = 50f, stateText = "Connection Error"))
             }
             delay(intervalSeconds * 1000)
+        }
+    }
+
+    suspend fun updateMap(mapId: String): Boolean {
+        return try {
+            val response = client.put(ApiClient.getEndpoint("status")) {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("map_id" to mapId))
+            }
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            false
         }
     }
 }

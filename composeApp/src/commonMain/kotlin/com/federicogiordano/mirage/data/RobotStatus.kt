@@ -13,6 +13,7 @@ data class RobotStatus(
     @SerialName("battery_percentage") val batteryPercentage: Float = 0f,
     @SerialName("map_id") val mapId: String = "",
     @SerialName("mission_text") val missionText: String = "",
+    @SerialName("state_id") val stateId: Int = -1,
     @SerialName("state_text") val stateText: String = "",
     @SerialName("velocity") val velocity: Velocity = Velocity(),
     @SerialName("robot_model") val robotModel: String = "",

@@ -13,6 +13,13 @@ class MappingService : BaseApiService {
         return client.get(ApiClient.getEndpoint("maps/$id")).body()
     }
 
+    suspend fun setMap(map: RobotMap) {
+        client.post(ApiClient.getEndpoint("maps")) {
+            setBody(map)
+        }
+
+    }
+
     // Fare anche delete? Se applicazione di base per gente che non ne sa nulla forse rischioso
 }
 

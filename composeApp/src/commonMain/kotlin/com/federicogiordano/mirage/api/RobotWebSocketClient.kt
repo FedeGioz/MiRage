@@ -1,10 +1,12 @@
 package com.federicogiordano.mirage
 
 import io.ktor.client.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -12,19 +14,29 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 class RobotWebSocketClient(
-    private val serverUrl: String = "ws://192.168.12.20:9090/"
+    private val serverUrl: String = "ws://192.168.12.20:9090/",
+    private val onConnectionStatus: (Boolean, String?) -> Unit = { _, _ -> }
 ) {
-    private val client = HttpClient {
-        install(WebSockets)
+
+    private var session: DefaultWebSocketSession? = null
+    private var job: Job? = null
+
+    private val client = HttpClient(CIO) {
+        install(WebSockets) {
+            pingIntervalMillis = 20_000
+        }
         install(Logging) {
-            level = LogLevel.INFO
+            level = LogLevel.ALL
         }
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var session: DefaultWebSocketSession? = null
     private var joystickToken: String? = null
     private var messageCount = 0
+    private var isConnected = false
+    private var connectionJob: Job? = null
+    private var reconnectAttempts = 0
+    private val maxReconnectAttempts = 5
 
     @Serializable
     data class RobotStateRequest(
@@ -42,11 +54,11 @@ class RobotWebSocketClient(
 
     @Serializable
     data class VelocityCommand(
-        val op: String = "publish",
-        val id: String,
-        val topic: String = "/joystick_vel",
-        val msg: VelocityMessage,
-        val latch: Boolean = false
+        @SerialName("op") val op: String,
+        @SerialName("id") val id: String,
+        @SerialName("topic") val topic: String,
+        @SerialName("msg") val msg: VelocityMessage,
+        @SerialName("latch") val latch: Boolean
     )
 
     @Serializable
@@ -69,14 +81,37 @@ class RobotWebSocketClient(
     )
 
     fun connect() {
-        println("STARTED CONNECT")
-        scope.launch {
-            try {
-                client.webSocket(serverUrl) {
-                    session = this
-                    println("WEBSOCKET DEF CONNECTED") // Arriva fin qua
+        if (connectionJob?.isActive == true) return
 
-                    launch {
+        connectionJob = scope.launch {
+            try {
+                reconnectAttempts = 0
+                connectWithRetry()
+            } catch (e: Exception) {
+                onConnectionStatus(false, "Failed to connect: ${e.message}")
+                println("WebSocket connection failed: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun connectWithRetry() {
+        while (reconnectAttempts < maxReconnectAttempts && !isConnected) {
+            try {
+                onConnectionStatus(false, "Connecting to robot... (attempt ${reconnectAttempts + 1})")
+                println("Attempting to connect to WebSocket (${reconnectAttempts + 1}/$maxReconnectAttempts)")
+
+                client.webSocket(
+                    urlString = serverUrl,
+                    request = {
+                    }
+                ) {
+                    session = this
+                    isConnected = true
+                    reconnectAttempts = 0
+                    println("WebSocket connected successfully")
+                    onConnectionStatus(true, null)
+
+                    try {
                         for (frame in incoming) {
                             when (frame) {
                                 is Frame.Text -> {
@@ -84,14 +119,49 @@ class RobotWebSocketClient(
                                     println("Received message: $text")
                                     processMessage(text)
                                 }
+                                is Frame.Close -> {
+                                    println("Connection closed: ${frame.readReason()}")
+                                    isConnected = false
+                                    break
+                                }
                                 else -> {}
                             }
                         }
+                    } catch (e: Exception) {
+                        println("Error processing incoming frames: ${e.message}")
+                        isConnected = false
                     }
                 }
             } catch (e: Exception) {
-                println("WebSocket error: ${e.message}")
+                println("WebSocket connection attempt failed: ${e.message}")
+                reconnectAttempts++
+
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    val delayTime = (reconnectAttempts * 1000).toLong()
+                    println("Retrying in ${delayTime/1000} seconds...")
+                    delay(delayTime)
+                }
             }
+        }
+
+        if (!isConnected) {
+            onConnectionStatus(false, "Failed to connect after $maxReconnectAttempts attempts")
+        }
+    }
+
+    private suspend fun sendMessage(message: String) {
+        try {
+            session?.let {
+                if (isConnected) {
+                    it.send(Frame.Text(message))
+                } else {
+                    println("Cannot send message: WebSocket not connected")
+                }
+            } ?: println("Cannot send message: Session is null")
+        } catch (e: Exception) {
+            println("Error sending message: ${e.message}")
+            isConnected = false
+            connect()
         }
     }
 
@@ -110,12 +180,47 @@ class RobotWebSocketClient(
         }
     }
 
-    private val json = Json {
-        encodeDefaults = true
+    fun sendVelocity(linear: Float, angular: Float) {
+        scope.launch {
+            if (joystickToken == null) {
+                println("Cannot send velocity: No joystick token available")
+                sendMessage("""{"op":"call_service","service":"/mir/get_joystick_token","id":"get_token"}""")
+                return@launch
+            }
+
+            if (!isConnected) {
+                println("Cannot send velocity: WebSocket not connected")
+                return@launch
+            }
+
+            messageCount++
+            val velocityCommand = VelocityCommand(
+                op = "publish",
+                id = "publish:/joystick_vel:$messageCount",
+                topic = "/joystick_vel",
+                msg = VelocityMessage(
+                    joystick_token = joystickToken!!,
+                    speed_command = SpeedCommand(
+                        linear = Vector3(x = linear, y = 0f, z = 0f),
+                        angular = Vector3(x = 0f, y = 0f, z = angular)
+                    )
+                ),
+                latch = false
+            )
+
+            val jsonString = Json.encodeToString(velocityCommand)
+            println("SENDING VELOCITY: $jsonString")
+            sendMessage(jsonString)
+        }
     }
 
     fun requestManualControl() {
         scope.launch {
+            val json = Json {
+                encodeDefaults = true
+                isLenient = true
+            }
+
             val request = RobotStateRequest(
                 args = RobotStateArgs(
                     robotState = 11,
@@ -123,38 +228,23 @@ class RobotWebSocketClient(
                 )
             )
 
-            println("REQUEST MANUAL: " + json.encodeToString(request))
-            sendMessage(json.encodeToString(request))
+            val jsonString = json.encodeToString(request)
+            println("REQUEST MANUAL: $jsonString")
+            sendMessage(jsonString)
         }
-    }
-
-    fun sendVelocity(linear: Float, angular: Float) {
-        if (joystickToken == null) return
-
-        scope.launch {
-            messageCount++
-            val velocityCommand = VelocityCommand(
-                id = "publish:/joystick_vel:$messageCount",
-                msg = VelocityMessage(
-                    joystick_token = joystickToken!!,
-                    speed_command = SpeedCommand(
-                        linear = Vector3(x = linear),
-                        angular = Vector3(z = angular)
-                    )
-                )
-            )
-            sendMessage(Json.encodeToString(velocityCommand))
-        }
-    }
-
-    private suspend fun sendMessage(message: String) {
-        session?.send(Frame.Text(message))
     }
 
     fun disconnect() {
+        job?.cancel()
         scope.launch {
-            session?.close()
-            client.close()
+            try {
+                session?.close()
+                session = null
+                isConnected = false
+                onConnectionStatus(false, "Disconnected")
+            } catch (e: Exception) {
+                println("Error disconnecting: ${e.message}")
+            }
         }
     }
 }

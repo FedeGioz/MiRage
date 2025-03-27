@@ -29,10 +29,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import androidx.compose.ui.platform.LocalDensity
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.federicogiordano.mirage.functions.MapsList
+import kotlinx.coroutines.delay
 
 enum class Screens(val title: String) {
     Home("Home"),
@@ -58,6 +63,20 @@ fun App() {
         composable(Screens.Settings.name) {
             SettingsView(navController)
         }
+
+        composable(
+            route = "function/{functionId}",
+            arguments = listOf(navArgument("functionId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val functionId = backStackEntry.arguments?.getString("functionId")
+
+            when (functionId) {
+                "mapping" -> MapsList(navController)
+                "manual_control", "missions", "diagnostics" ->
+                    FunctionSubScreen(functionId.replace("_", " ").capitalize(), navController)
+                else -> FunctionSubScreen("Unknown Function", navController)
+            }
+        }
     }
 }
 
@@ -67,7 +86,14 @@ fun HomeView(navController: NavHostController = rememberNavController()) {
     var angularVelocity by remember { mutableStateOf(0f) }
     val webSocketClient = remember { RobotWebSocketClient() }
     var isConnected by remember { mutableStateOf(false) }
-    var lastSentValues by remember { mutableStateOf(Pair(0f, 0f)) }
+    var isJoystickActive by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isJoystickActive, linearVelocity, angularVelocity) {
+        while(isJoystickActive && isConnected) {
+            webSocketClient.sendVelocity(linearVelocity, angularVelocity)
+            delay(100)
+        }
+    }
 
     DisposableEffect(Unit) {
         webSocketClient.connect()
@@ -106,20 +132,16 @@ fun HomeView(navController: NavHostController = rememberNavController()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-
             JoystickController(
                 modifier = Modifier.padding(32.dp),
                 onVelocityChanged = { linear, angular ->
-                    println("VELOCITY CHANGED")
-
                     linearVelocity = linear
-                    angularVelocity = angular
+                    angularVelocity = -angular
 
-                    if (isConnected &&
-                        (kotlin.math.abs(linear - lastSentValues.first) > 0.01f ||
-                                kotlin.math.abs(angular - lastSentValues.second) > 0.01f)) {
-                        webSocketClient.sendVelocity(linear, angular)
-                        lastSentValues = Pair(linear, angular)
+                    isJoystickActive = kotlin.math.abs(linear) > 0.01f || kotlin.math.abs(angular) > 0.01f
+
+                    if (!isJoystickActive && isConnected) {
+                        webSocketClient.sendVelocity(0f, 0f)
                     }
                 }
             )
