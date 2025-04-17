@@ -20,7 +20,7 @@ data class FunctionMenuItem(
 )
 
 val functionMenuItems = listOf(
-    FunctionMenuItem("manual_control", "Manual Control", "Control robot movements"),
+    FunctionMenuItem("sounds", "Sounds", "View and play sounds"),
     FunctionMenuItem("mapping", "Mapping", "Create and manage maps"),
     FunctionMenuItem("missions", "Missions", "Create and execute missions"),
     FunctionMenuItem("diagnostics", "Diagnostics", "System diagnostics and troubleshooting")

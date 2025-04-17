@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 
 object ApiClient {
     private const val API_URL = "http://192.168.12.20/api/v2.0.0"
+//    private const val API_URL = "http://192.168.126.223:8080/api/v2.0.0"
 
     val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {

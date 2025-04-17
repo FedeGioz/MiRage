@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.federicogiordano.mirage.functions.MapsList
+import com.federicogiordano.mirage.functions.MissionsList
+import com.federicogiordano.mirage.functions.SoundsList
 import kotlinx.coroutines.delay
 
 enum class Screens(val title: String) {
@@ -72,7 +74,9 @@ fun App() {
 
             when (functionId) {
                 "mapping" -> MapsList(navController)
-                "manual_control", "missions", "diagnostics" ->
+                "missions" -> MissionsList(navController)
+                "sounds" -> SoundsList(navController)
+                "diagnostics" ->
                     FunctionSubScreen(functionId.replace("_", " ").capitalize(), navController)
                 else -> FunctionSubScreen("Unknown Function", navController)
             }

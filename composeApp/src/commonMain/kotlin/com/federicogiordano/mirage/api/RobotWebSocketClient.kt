@@ -79,6 +79,23 @@ class RobotWebSocketClient(
         val y: Float = 0f,
         val z: Float = 0f
     )
+    // {"op":"call_service","id":"call_service:/mir_sound:6","service":"/mir_sound","args":{"action":0,"priority":2,"sound_guid":"089e7c22-04d1-11f0-b4a3-00012978ebab","length":2000,"volume":100}}
+    @Serializable
+    data class PlaySoundRequest(
+        @SerialName("op") val op: String = "call_service",
+        @SerialName("id") val id: String = "call_service:/mir_sound:6",
+        @SerialName("service") val service: String = "/mir_sound",
+        @SerialName("args") val args: PlaySoundArgs
+    )
+
+    @Serializable
+    data class PlaySoundArgs(
+        val action: Int,
+        val priority: Int,
+        val sound_guid: String,
+        val length: Int,
+        val volume: Int
+    )
 
     fun connect() {
         if (connectionJob?.isActive == true) return
@@ -165,6 +182,33 @@ class RobotWebSocketClient(
         }
     }
 
+    fun sendSoundPlayRequest(soundGuid: String){
+        scope.launch {
+            if (!isConnected || session == null) {
+                println("Cannot send sound: WebSocket not connected or session is null")
+                connect() // Attempt to reconnect
+                return@launch
+            }
+
+            val soundRequest = PlaySoundRequest(
+                op = "call_service",
+                id = "call_service:/mir_sound:6",
+                service = "/mir_sound",
+                args = PlaySoundArgs(
+                    action = 0,
+                    priority = 2,
+                    sound_guid = soundGuid,
+                    length = 100000,
+                    volume = 100
+                )
+            )
+
+            val jsonString = Json.encodeToString(soundRequest)
+            println("SENDING SOUND: $jsonString")
+            sendMessage(jsonString)
+        }
+    }
+
     private fun processMessage(message: String) {
         try {
             val jsonElement = Json.parseToJsonElement(message)
@@ -188,8 +232,9 @@ class RobotWebSocketClient(
                 return@launch
             }
 
-            if (!isConnected) {
-                println("Cannot send velocity: WebSocket not connected")
+            if (!isConnected || session == null) {
+                println("Cannot send velocity: WebSocket not connected or session is null")
+                connect() // Attempt to reconnect
                 return@launch
             }
 
@@ -211,6 +256,23 @@ class RobotWebSocketClient(
             val jsonString = Json.encodeToString(velocityCommand)
             println("SENDING VELOCITY: $jsonString")
             sendMessage(jsonString)
+
+            val soundRequest = PlaySoundRequest(
+                op = "call_service",
+                id = "call_service:/mir_sound:6",
+                service = "/mir_sound",
+                args = PlaySoundArgs(
+                    action = 0,
+                    priority = 2,
+                    sound_guid = "089e7c22-04d1-11f0-b4a3-00012978ebab",
+                    length = 100000,
+                    volume = 100
+                )
+            )
+
+            val jsonString2 = Json.encodeToString(soundRequest)
+            println("SENDING SOUND: $jsonString2")
+            sendMessage(jsonString2)
         }
     }
 
@@ -240,7 +302,7 @@ class RobotWebSocketClient(
             try {
                 session?.close()
                 session = null
-                isConnected = false
+                isConnected = false  // Make sure this happens when session is nulled
                 onConnectionStatus(false, "Disconnected")
             } catch (e: Exception) {
                 println("Error disconnecting: ${e.message}")

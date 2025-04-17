@@ -12,13 +12,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavHostController    
 import com.federicogiordano.mirage.api.MappingService
 import com.federicogiordano.mirage.api.StatusService
 import com.federicogiordano.mirage.data.RobotMap
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+// TODO: dargli un punto su mappa/coords e farlo andare
+// TODO: errori e analytics
+// TODO: provare a connettere WMS con MiR per fargli detectare automaticamente spedizione e andare li, far scansionare operatore qr code del pacco e farlo portare via dal MiR
+
+
+// TODO: differenziarsi dagli altri, fare magari parte dell'orientamento, missioni con AI ecc...
+// TODO: missione automatica di visita dell'istituto con missione per far visitare ogni spazio via app
+// TODO: RIASSUNTO: FARE QUALCOSA DI DIVERSO E CREATIVO PER IMPRESSIONARE I PROF IN COMMISSIONE
+// TODO: Modello 3d del robot che mostra la luce con lo stato ecc stile Tesla
+// TODO: Fare app per richiesta oggetti al centralino, al prof xxx serve xxx, va al centralino, chiede, vengono messi sopra, vengono riportati al prof
+
+
 
 @Composable
 fun MapsList(navController: NavHostController) {
@@ -89,9 +102,10 @@ fun MapsList(navController: NavHostController) {
                             isUpdating = true
 
                             MainScope().launch {
-                                val success = statusService.updateMap(mapId)
+                                val success = MappingService().updateMap(mapId)
 
                                 if (success) {
+                                    delay(1000)
                                     val newStatus = statusService.getStatus()
                                     updateResult = newStatus.mapId == mapId
                                     activeMapId = newStatus.mapId
@@ -99,9 +113,9 @@ fun MapsList(navController: NavHostController) {
                                     updateResult = false
                                 }
 
+                                selectedMap = null
                                 isUpdating = false
 
-                                delay(3000)
                                 updateResult = null
                             }
                         }

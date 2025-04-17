@@ -29,16 +29,4 @@ class StatusService : BaseApiService {
             delay(intervalSeconds * 1000)
         }
     }
-
-    suspend fun updateMap(mapId: String): Boolean {
-        return try {
-            val response = client.put(ApiClient.getEndpoint("status")) {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("map_id" to mapId))
-            }
-            response.status.isSuccess()
-        } catch (e: Exception) {
-            false
-        }
-    }
 }
