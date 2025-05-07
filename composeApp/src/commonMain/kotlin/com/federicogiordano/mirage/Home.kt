@@ -88,22 +88,14 @@ fun App() {
 fun HomeView(navController: NavHostController = rememberNavController()) {
     var linearVelocity by remember { mutableStateOf(0f) }
     var angularVelocity by remember { mutableStateOf(0f) }
-    val webSocketClient = remember { RobotWebSocketClient() }
+    val webSocketClient = remember { RobotWebSocketManager.getClient() }
     var isConnected by remember { mutableStateOf(false) }
     var isJoystickActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(isJoystickActive, linearVelocity, angularVelocity) {
-        while(isJoystickActive && isConnected) {
+        while (isJoystickActive && isConnected) {
             webSocketClient.sendVelocity(linearVelocity, angularVelocity)
             delay(100)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        webSocketClient.connect()
-        println("WEBSOCKET CONNECTED")
-        onDispose {
-            webSocketClient.disconnect()
         }
     }
 

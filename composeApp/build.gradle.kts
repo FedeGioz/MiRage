@@ -33,6 +33,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.media3.exoplayer)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -95,5 +96,6 @@ dependencies {
     implementation(libs.androidx.navigation.common.android)
     implementation(libs.androidx.ui.android)
     debugImplementation(compose.uiTooling)
+    implementation(libs.androidx.media3.ui)
 }
 

@@ -13,6 +13,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
+object RobotWebSocketManager {
+    private val client = RobotWebSocketClient().connect()
+
+    fun getClient(): RobotWebSocketClient = client
+}
+
 class RobotWebSocketClient(
     private val serverUrl: String = "ws://192.168.12.20:9090/",
     private val onConnectionStatus: (Boolean, String?) -> Unit = { _, _ -> }
@@ -82,9 +88,9 @@ class RobotWebSocketClient(
     // {"op":"call_service","id":"call_service:/mir_sound:6","service":"/mir_sound","args":{"action":0,"priority":2,"sound_guid":"089e7c22-04d1-11f0-b4a3-00012978ebab","length":2000,"volume":100}}
     @Serializable
     data class PlaySoundRequest(
-        @SerialName("op") val op: String = "call_service",
-        @SerialName("id") val id: String = "call_service:/mir_sound:6",
-        @SerialName("service") val service: String = "/mir_sound",
+        @SerialName("op") val op: String,
+        @SerialName("id") val id: String,
+        @SerialName("service") val service: String,
         @SerialName("args") val args: PlaySoundArgs
     )
 
@@ -97,8 +103,8 @@ class RobotWebSocketClient(
         val volume: Int
     )
 
-    fun connect() {
-        if (connectionJob?.isActive == true) return
+    fun connect(): RobotWebSocketClient {
+        if (connectionJob?.isActive == true) return this
 
         connectionJob = scope.launch {
             try {
@@ -109,6 +115,8 @@ class RobotWebSocketClient(
                 println("WebSocket connection failed: ${e.message}")
             }
         }
+
+        return this
     }
 
     private suspend fun connectWithRetry() {
