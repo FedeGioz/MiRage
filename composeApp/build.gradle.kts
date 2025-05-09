@@ -58,6 +58,9 @@ kotlin {
             implementation(libs.ktor.client.core.v310)
             implementation(libs.ktor.client.cio.v310)
             implementation(libs.ktor.client.logging)
+            implementation(libs.sha2)
+            implementation(project.dependencies.platform("org.kotlincrypto.hash:bom:0.7.0"))
+            implementation(libs.okio)
         }
     }
 }
