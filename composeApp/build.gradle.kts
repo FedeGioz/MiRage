@@ -61,6 +61,9 @@ kotlin {
             implementation(libs.sha2)
             implementation(project.dependencies.platform("org.kotlincrypto.hash:bom:0.7.0"))
             implementation(libs.okio)
+            implementation(libs.moko.mvvm.core)
+            implementation(libs.moko.mvvm.flow)
+            implementation(libs.moko.mvvm.compose)
         }
     }
 }
