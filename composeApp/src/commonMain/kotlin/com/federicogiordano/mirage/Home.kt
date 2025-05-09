@@ -42,6 +42,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.federicogiordano.mirage.api.LoginScreen
 import com.federicogiordano.mirage.api.LoginService
+import com.federicogiordano.mirage.ui.WifiSelectionScreen // Added import
 import com.federicogiordano.mirage.functions.MapsList
 import com.federicogiordano.mirage.functions.MissionsList
 import com.federicogiordano.mirage.functions.SoundsList
@@ -52,7 +53,8 @@ enum class Screens(val title: String) {
     Home("Home"),
     Functions("Functions"),
     Settings("Settings"),
-    Login("Login")
+    Login("Login"),
+    WifiSelection("WifiSelection") // Added WifiSelection screen
 }
 
 
@@ -71,9 +73,17 @@ fun App() {
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) Screens.Home.name else "login"
+        startDestination = Screens.WifiSelection.name // Changed start destination
     ) {
-        composable("login") {
+        composable(Screens.WifiSelection.name) {
+            WifiSelectionScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screens.Login.name)
+                }
+            )
+        }
+
+        composable(Screens.Login.name) { // Ensure this matches the enum if you use Screens.Login.name elsewhere
             val loginViewModel = remember { LoginViewModel(loginService) }
             LoginScreen(navController, loginViewModel)
         }
