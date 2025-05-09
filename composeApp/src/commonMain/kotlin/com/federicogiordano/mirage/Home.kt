@@ -42,7 +42,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.federicogiordano.mirage.api.LoginScreen
 import com.federicogiordano.mirage.api.LoginService
-import com.federicogiordano.mirage.ui.WifiSelectionScreen // Added import
+import com.federicogiordano.mirage.WifiSelectionScreen // Updated import
 import com.federicogiordano.mirage.functions.MapsList
 import com.federicogiordano.mirage.functions.MissionsList
 import com.federicogiordano.mirage.functions.SoundsList
