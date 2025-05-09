@@ -30,40 +30,64 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import androidx.compose.ui.platform.LocalDensity
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.federicogiordano.mirage.api.LoginScreen
+import com.federicogiordano.mirage.api.LoginService
 import com.federicogiordano.mirage.functions.MapsList
 import com.federicogiordano.mirage.functions.MissionsList
 import com.federicogiordano.mirage.functions.SoundsList
+import com.federicogiordano.mirage.viewmodel.LoginViewModel
 import kotlinx.coroutines.delay
 
 enum class Screens(val title: String) {
     Home("Home"),
     Functions("Functions"),
-    Settings("Settings")
+    Settings("Settings"),
+    Login("Login")
 }
 
 
 @Composable
 fun App() {
     val navController = rememberNavController()
+    val loginService = remember { LoginService() }
+    val isLoggedIn by loginService.isLoggedIn.collectAsState(initial = false)
+
+    val handleLogout = {
+        loginService.logout()
+        navController.navigate("login") {
+            popUpTo(0) { inclusive = true }
+        }
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screens.Home.name
+        startDestination = if (isLoggedIn) Screens.Home.name else "login"
     ) {
+        composable("login") {
+            val loginViewModel = remember { LoginViewModel(loginService) }
+            LoginScreen(navController, loginViewModel)
+        }
+
         composable(Screens.Home.name) {
-            HomeView(navController)
+            HomeView(navController, handleLogout)
         }
+
         composable(Screens.Functions.name) {
-            FunctionsView(navController)
+            FunctionsView(navController, handleLogout)
         }
+
         composable(Screens.Settings.name) {
-            SettingsView(navController)
+            SettingsView(navController, handleLogout)
         }
 
         composable(
@@ -85,7 +109,10 @@ fun App() {
 }
 
 @Composable
-fun HomeView(navController: NavHostController = rememberNavController()) {
+fun HomeView(
+    navController: NavHostController = rememberNavController(),
+    onLogout: () -> Unit = {}
+) {
     var linearVelocity by remember { mutableStateOf(0f) }
     var angularVelocity by remember { mutableStateOf(0f) }
     val webSocketClient = remember { RobotWebSocketManager.getClient() }
@@ -101,7 +128,8 @@ fun HomeView(navController: NavHostController = rememberNavController()) {
 
     AppScaffold(
         navController = navController,
-        currentScreen = Screens.Home
+        currentScreen = Screens.Home,
+        onLogout = onLogout
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -227,10 +255,14 @@ fun JoystickController(
 }
 
 @Composable
-fun FunctionsView(navController: NavHostController = rememberNavController()) {
+fun FunctionsView(
+    navController: NavHostController = rememberNavController(),
+    onLogout: () -> Unit = {}
+) {
     AppScaffold(
         navController = navController,
-        currentScreen = Screens.Functions
+        currentScreen = Screens.Functions,
+        onLogout = onLogout
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -245,10 +277,14 @@ fun FunctionsView(navController: NavHostController = rememberNavController()) {
 }
 
 @Composable
-fun SettingsView(navController: NavHostController = rememberNavController()) {
+fun SettingsView(
+    navController: NavHostController = rememberNavController(),
+    onLogout: () -> Unit = {}
+) {
     AppScaffold(
         navController = navController,
-        currentScreen = Screens.Settings
+        currentScreen = Screens.Settings,
+        onLogout = onLogout
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -258,6 +294,24 @@ fun SettingsView(navController: NavHostController = rememberNavController()) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = "Settings Screen")
+        }
+    }
+}
+
+@Composable
+fun LoginView(navController: NavHostController = rememberNavController()) {
+    AppScaffold(
+        navController = navController,
+        currentScreen = Screens.Login
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LoginScreen(navController)
         }
     }
 }
