@@ -191,10 +191,10 @@ class RobotWebSocketClient(
     }
 
     fun sendSoundPlayRequest(soundGuid: String){
-        scope.launch {
+        scope.launch{
             if (!isConnected || session == null) {
                 println("Cannot send sound: WebSocket not connected or session is null")
-                connect() // Attempt to reconnect
+                connect()
                 return@launch
             }
 
@@ -213,6 +213,7 @@ class RobotWebSocketClient(
 
             val jsonString = Json.encodeToString(soundRequest)
             println("SENDING SOUND: $jsonString")
+
             sendMessage(jsonString)
         }
     }
@@ -242,7 +243,7 @@ class RobotWebSocketClient(
 
             if (!isConnected || session == null) {
                 println("Cannot send velocity: WebSocket not connected or session is null")
-                connect() // Attempt to reconnect
+                connect()
                 return@launch
             }
 
@@ -264,23 +265,6 @@ class RobotWebSocketClient(
             val jsonString = Json.encodeToString(velocityCommand)
             println("SENDING VELOCITY: $jsonString")
             sendMessage(jsonString)
-
-            val soundRequest = PlaySoundRequest(
-                op = "call_service",
-                id = "call_service:/mir_sound:6",
-                service = "/mir_sound",
-                args = PlaySoundArgs(
-                    action = 0,
-                    priority = 2,
-                    sound_guid = "089e7c22-04d1-11f0-b4a3-00012978ebab",
-                    length = 100000,
-                    volume = 100
-                )
-            )
-
-            val jsonString2 = Json.encodeToString(soundRequest)
-            println("SENDING SOUND: $jsonString2")
-            sendMessage(jsonString2)
         }
     }
 

@@ -5,7 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,13 +23,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun AppScaffold(
     navController: NavHostController,
     currentScreen: Screens,
+    onLogout: () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val statusViewModel = viewModel<StatusViewModel>()
 
     Scaffold(
         topBar = {
-            StatusAppBar(currentScreen.title, statusViewModel)
+            StatusAppBar(statusViewModel, onLogout)
         },
         bottomBar = {
             NavigationBar {

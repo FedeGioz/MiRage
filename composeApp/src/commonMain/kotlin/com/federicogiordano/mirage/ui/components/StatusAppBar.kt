@@ -1,6 +1,8 @@
 package com.federicogiordano.mirage.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,8 +13,8 @@ import com.federicogiordano.mirage.viewmodel.StatusViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusAppBar(
-    title: String,
-    statusViewModel: StatusViewModel
+    statusViewModel: StatusViewModel,
+    onLogout: () -> Unit = {}
 ) {
     val status by statusViewModel.status.collectAsState(null)
 
@@ -23,7 +25,12 @@ fun StatusAppBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(title)
+                IconButton(onClick = onLogout) {
+                    Icon(
+                        imageVector = Icons.Default.Logout,
+                        contentDescription = "Logout"
+                    )
+                }
                 StatusIndicator(status)
             }
         }
